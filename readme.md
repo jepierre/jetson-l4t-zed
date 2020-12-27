@@ -18,10 +18,14 @@ sudo docker run -it --rm --net=host --runtime nvidia --privileged -e DISPLAY=$DI
 
 
 remove old unused images
-sudo docker rmi -f $(sudo docker images --filter "dangling=true" -q --no-trunc
+sudo docker rmi -f $(sudo docker images --filter "dangling=true" -q --no-trunc)
 
 remove old unused containers
 sudo docker rm $(sudo docker ps -qa --no-trunc --filter "status=exited")
 
 remove volumes
 docker volume rm $(docker volume ls -qf dangling=true
+
+
+# good zed docker image to use
+https://github.com/stereolabs/zed-docker/tree/master/3.X/jetpack_4.X/py-devel

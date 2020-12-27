@@ -5,7 +5,6 @@ RUN apt-get update -y && \
     lsb-release \
     apt-transport-https \
     cmake \
-    vim \
     build-essential \ 
     make \ 
     python3-dev \

@@ -1,0 +1,42 @@
+#https://ngc.nvidia.com/catalog/containers/nvidia:l4t-base
+ARG L4T_MINOR_VERSION=4.4
+
+FROM nvcr.io/nvidia/l4t-base:r32.${L4T_MINOR_VERSION}
+
+ARG L4T_MINOR_VERSION=4.4
+ARG ZED_SDK_MAJOR=4
+ARG ZED_SDK_MINOR=4
+ARG JETPACK_MAJOR=3
+ARG JETPACK_MINOR=3
+
+#This environment variable is needed to use the streaming features on Jetson inside a container
+ENV LOGNAME root
+ENV DEBIAN_FRONTEND noninteractive
+# use ; for or and && for and. with ;, the next command will run regardless
+RUN apt-get update -y && apt-get install --no-install-recommends lsb-release wget less udev curl sudo apt-transport-https -y && \
+    echo "versions: ${L4T_MINOR_VERSION} ${ZED_SDK_MAJOR}.${ZED_SDK_MINOR}" && \
+    echo "# R32 (release), REVISION: ${L4T_MINOR_VERSION}" > /etc/nv_tegra_release ; \
+    curl https://stereolabs.sfo2.cdn.digitaloceanspaces.com/zedsdk/3.3/ZED_SDK_Tegra_JP44_v3.3.3.run --output zed_sdk_jp44_v3.3.3.run && \
+    chmod +x zed_sdk_jp44_v3.3.3.run && \
+    ./zed_sdk_jp44_v3.3.3.run silent skip_tools && \
+    # wget -q --no-check-certificate -O ZED_SDK_Linux_JP.run https://download.stereolabs.com/zedsdk/${ZED_SDK_MAJOR}.${ZED_SDK_MINOR}/jp${JETPACK_MAJOR}${JETPACK_MINOR}/jetsons && \
+    # chmod +x ZED_SDK_Linux_JP.run ; ./ZED_SDK_Linux_JP.run silent skip_tools && \
+    rm -rf /usr/local/zed/resources/* \
+    rm -rf ZED_SDK_Linux_JP.run && \
+    rm -rf /var/lib/apt/lists/*
+
+# ZED Python API
+RUN apt-get update -y && apt-get install --no-install-recommends python3 python3-pip python3-dev python3-setuptools build-essential -y && \ 
+    wget download.stereolabs.com/zedsdk/pyzed -O /usr/local/zed/get_python_api.py && \
+    python3 /usr/local/zed/get_python_api.py && \
+    python3 -m pip install cython wheel && \
+    python3 -m pip install numpy pyopengl *.whl && \
+    apt-get remove --purge build-essential -y && apt-get autoremove -y && \
+    rm *.whl ; rm -rf /var/lib/apt/lists/*
+
+#This symbolic link is needed to use the streaming features on Jetson inside a container
+RUN ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
+
+WORKDIR /usr/local/zed
+
+CMD ["/bin/bash"]
